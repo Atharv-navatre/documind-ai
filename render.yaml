@@ -1,0 +1,18 @@
+# Render.yaml - Render Deployment Configuration
+# ==============================================
+
+services:
+  - type: web
+    name: documind-ai
+    env: docker
+    plan: free
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    envVars:
+      - key: API_KEY
+        sync: false
+      - key: ENVIRONMENT
+        value: production
+      - key: MAX_FILE_SIZE_MB
+        value: 10
+    healthCheckPath: /health
