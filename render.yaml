@@ -1,6 +1,3 @@
-# Render.yaml - Render Deployment Configuration
-# ==============================================
-
 services:
   - type: web
     name: documind-ai
