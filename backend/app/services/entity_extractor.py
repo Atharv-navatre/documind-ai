@@ -436,6 +436,23 @@ NAME_BLACKLIST = {
     'data breach', 'cyber security', 'machine learning', 'cloud computing',
     'project manager', 'software engineer', 'data scientist', 'team lead',
     'dear sir', 'dear madam', 'best regards', 'kind regards', 'sincerely',
+    # Invoice/business document false positives
+    'consulting', 'fee', 'services', 'rendered', 'total', 'due', 'amount',
+    'tax', 'invoice', 'payment', 'balance', 'subtotal', 'price', 'cost',
+    'location', 'address', 'phone', 'email', 'fax', 'website', 'date',
+    'number', 'quantity', 'description', 'unit', 'rate', 'discount',
+    'credit', 'debit', 'account', 'billing', 'shipping', 'order',
+}
+
+# Full phrases that should NEVER be names
+NAME_PHRASE_BLACKLIST = {
+    'consulting fee', 'services rendered', 'total due', 'grand total',
+    'amount due', 'balance due', 'payment due', 'invoice number',
+    'order number', 'reference number', 'account number', 'phone number',
+    'new york', 'los angeles', 'san francisco', 'las vegas', 'hong kong',
+    'data breach', 'cyber security', 'machine learning', 'cloud computing',
+    'project manager', 'software engineer', 'data scientist', 'team lead',
+    'acme corporation', 'thank you',  # Orgs should not be names
 }
 
 # Organization indicators (must contain one of these to be valid)
@@ -463,8 +480,9 @@ def _filter_names(names: Set[str]) -> List[str]:
     Rules:
     - Keep 2-3 word names only
     - Must be properly capitalized
-    - Remove blacklisted words
-    - Remove entries that look like titles/phrases
+    - Remove blacklisted words and phrases
+    - Remove entries that look like titles/business terms
+    - Require first word to look like a first name OR title
     """
     filtered = []
     
@@ -481,12 +499,18 @@ def _filter_names(names: Set[str]) -> List[str]:
             continue
         
         # Length check
-        if len(name) < 4 or len(name) > 40:
+        if len(name) < 4 or len(name) > 35:
             continue
         
-        # Check against blacklist (case-insensitive)
         name_lower = name.lower()
-        if any(bl in name_lower for bl in NAME_BLACKLIST):
+        
+        # Check against phrase blacklist FIRST (exact match)
+        if name_lower in NAME_PHRASE_BLACKLIST:
+            continue
+        
+        # Check if ANY blacklisted word appears in the name
+        name_words_lower = [w.lower() for w in words]
+        if any(bl_word in name_words_lower for bl_word in NAME_BLACKLIST):
             continue
         
         # All words should start with capital letter
@@ -505,6 +529,21 @@ def _filter_names(names: Set[str]) -> List[str]:
         if not all(2 <= len(w) <= 15 for w in words):
             continue
         
+        # CRITICAL: First word must look like a real first name or title
+        first_word_lower = words[0].lower()
+        is_title = first_word_lower in {'mr', 'mrs', 'ms', 'dr', 'prof', 'sir', 'lady'}
+        is_common_name = first_word_lower in COMMON_FIRST_NAMES
+        
+        # If neither title nor common name, apply stricter validation
+        if not (is_title or is_common_name):
+            # Reject if the name contains any organization indicator
+            if any(ind in name_lower for ind in ORG_INDICATORS):
+                continue
+            # Reject names ending with common business suffixes
+            last_word_lower = words[-1].lower()
+            if last_word_lower in {'inc', 'corp', 'corporation', 'ltd', 'llc', 'company', 'group', 'services', 'consulting', 'fee', 'due', 'rendered', 'location'}:
+                continue
+        
         filtered.append(name)
     
     # Remove duplicates and sort
@@ -517,8 +556,9 @@ def _filter_organizations(organizations: Set[str]) -> List[str]:
     
     Rules:
     - Must contain org indicator (Inc, Corp, Ltd, etc.) OR be known pattern
-    - Max 5 words
+    - Max 4 words
     - Remove sentence-like entries
+    - Remove entries with random document text mixed in
     """
     filtered = []
     
@@ -529,32 +569,59 @@ def _filter_organizations(organizations: Set[str]) -> List[str]:
         if not org:
             continue
         
-        # Word count check (max 6 words)
+        # Word count check (max 4 words - stricter)
         words = org.split()
-        if len(words) > 6:
+        if len(words) > 4:
             continue
         
-        # Length check
-        if len(org) < 3 or len(org) > 60:
+        # Length check (stricter max)
+        if len(org) < 3 or len(org) > 45:
+            continue
+        
+        org_lower = org.lower()
+        
+        # CRITICAL: Reject orgs that contain obvious noise words
+        noise_words = {'services rendered', 'consulting fee', 'rendered consulting', 
+                       'total due', 'amount due', 'thank you', 'dear sir', 'dear madam'}
+        if any(noise in org_lower for noise in noise_words):
+            continue
+        
+        # Reject if org contains state abbreviations mixed with noise
+        # e.g., "NY Services Rendered Consulting"
+        if re.search(r'\b[A-Z]{2}\s+(?:services|rendered|consulting|fee)', org, re.IGNORECASE):
             continue
         
         # Must contain an org indicator
-        org_lower = org.lower()
-        has_indicator = any(ind in org_lower for ind in ORG_INDICATORS)
+        has_indicator = any(ind in org_lower.split() for ind in ORG_INDICATORS)
+        
+        # Also check for indicator at end with punctuation
+        if not has_indicator:
+            has_indicator = bool(re.search(r'\b(?:Inc|Corp|Ltd|LLC|Co)\b\.?$', org, re.IGNORECASE))
         
         if not has_indicator:
-            # Exception: Allow if it starts with capital and is short
-            if not (len(words) <= 3 and words[0][0].isupper()):
-                continue
+            continue
         
         # Skip if looks like a sentence (has common verbs/articles mid-string)
-        sentence_indicators = [' is ', ' was ', ' are ', ' were ', ' the ', ' and ', ' or ', ' for ', ' with ']
+        sentence_indicators = [' is ', ' was ', ' are ', ' were ', ' the ', ' for ', ' with ', ' and the ', ' or the ']
         if any(ind in org_lower for ind in sentence_indicators):
             continue
         
         filtered.append(org)
     
-    return sorted(list(set(filtered)))
+    # Remove near-duplicates (keep shorter/cleaner version)
+    final = []
+    filtered_sorted = sorted(filtered, key=len)  # Shorter first
+    for org in filtered_sorted:
+        # Check if this is a substring of something already added
+        is_duplicate = False
+        for existing in final:
+            if org.lower() in existing.lower() or existing.lower() in org.lower():
+                is_duplicate = True
+                break
+        if not is_duplicate:
+            final.append(org)
+    
+    return sorted(final)
 
 
 def _filter_locations(locations: Set[str]) -> List[str]:
@@ -562,9 +629,10 @@ def _filter_locations(locations: Set[str]) -> List[str]:
     Filters locations to keep only valid places.
     
     Rules:
-    - "City, State" format is good
+    - "City, State" format is preferred
     - Known cities/states/countries are good
     - Remove generic words
+    - Deduplicate ("New York" vs "New York, NY" → keep the more specific one)
     """
     filtered = []
     
@@ -586,7 +654,12 @@ def _filter_locations(locations: Set[str]) -> List[str]:
         
         # Word count check (max 4 words for locations)
         words = loc.split()
-        if len(words) > 5:
+        if len(words) > 4:
+            continue
+        
+        # Skip if contains business noise
+        noise_words = {'services', 'rendered', 'consulting', 'fee', 'due', 'invoice', 'payment'}
+        if any(w.lower() in noise_words for w in words):
             continue
         
         # Good patterns:
@@ -600,19 +673,57 @@ def _filter_locations(locations: Set[str]) -> List[str]:
             filtered.append(loc)
             continue
         
-        # 3. Starts with capital, reasonable length
-        if loc[0].isupper() and len(words) <= 3:
-            filtered.append(loc)
-            continue
+        # 3. Starts with capital, max 2 words (stricter)
+        if loc[0].isupper() and len(words) <= 2:
+            # Additional validation: looks like a place name
+            if all(w[0].isupper() for w in words if len(w) > 0):
+                filtered.append(loc)
+                continue
     
-    return sorted(list(set(filtered)))
+    # Smart deduplication: prefer more specific entries
+    # e.g., "New York, NY" over "New York"
+    final = []
+    seen_bases = set()
+    
+    # Sort by length descending (prefer more specific)
+    filtered_sorted = sorted(set(filtered), key=len, reverse=True)
+    
+    for loc in filtered_sorted:
+        # Extract base location name (before comma if present)
+        base = loc.split(',')[0].strip().lower()
+        
+        # If we haven't seen this base, add it
+        if base not in seen_bases:
+            final.append(loc)
+            seen_bases.add(base)
+    
+    return sorted(final)
 
 
 def _filter_dates(dates: Set[str]) -> List[str]:
     """
     Filters dates to keep only valid date formats.
+    
+    Rules:
+    - Must contain actual date components (month name, day, year pattern)
+    - Remove noise like "#1001 Date:"
     """
     filtered = []
+    
+    # Valid date patterns
+    date_validators = [
+        # Full/abbreviated month names with optional day and year
+        re.compile(r'\b(?:January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{1,2}(?:st|nd|rd|th)?,?\s*\d{4}\b', re.IGNORECASE),
+        # Month Year: June 2020
+        re.compile(r'\b(?:January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{4}\b', re.IGNORECASE),
+        # Numeric: 2024-03-15, 03/15/2024, 15-03-2024
+        re.compile(r'\b\d{4}[-/]\d{1,2}[-/]\d{1,2}\b'),
+        re.compile(r'\b\d{1,2}[-/]\d{1,2}[-/]\d{2,4}\b'),
+        # Quarter: Q1 2024
+        re.compile(r'\b[Qq][1-4]\s+\d{4}\b'),
+        # Year range: 2020-2024
+        re.compile(r'\b\d{4}\s*[-–—]\s*\d{4}\b'),
+    ]
     
     for date in dates:
         date = date.strip()
@@ -621,8 +732,16 @@ def _filter_dates(dates: Set[str]) -> List[str]:
         if not date:
             continue
         
+        # Skip if starts with # (invoice/order numbers)
+        if date.startswith('#'):
+            continue
+        
+        # Skip if contains "Date:" (label not value)
+        if 'date:' in date.lower():
+            continue
+        
         # Length check
-        if len(date) < 4 or len(date) > 30:
+        if len(date) < 4 or len(date) > 25:
             continue
         
         # Must have numbers
@@ -632,6 +751,11 @@ def _filter_dates(dates: Set[str]) -> List[str]:
         # Skip if too many words (>4)
         words = date.split()
         if len(words) > 4:
+            continue
+        
+        # Validate against known good patterns
+        is_valid_date = any(pattern.search(date) for pattern in date_validators)
+        if not is_valid_date:
             continue
         
         filtered.append(date)
