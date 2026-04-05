@@ -1,6 +1,6 @@
 # 🚀 DocuMind AI
 
-### AI-Powered Document Analysis & Extraction API
+## AI-Powered Document Analysis & Extraction API
 
 Built for **GUVI Hackathon 2026 – Intern Hiring Challenge**
 
@@ -8,115 +8,159 @@ Built for **GUVI Hackathon 2026 – Intern Hiring Challenge**
 
 ## 📌 Overview
 
-**DocuMind AI** is a production-ready backend API that intelligently processes and analyzes documents across multiple formats.
+**DocuMind AI** is a production-ready backend API that processes and analyzes documents across multiple formats.
 
-It accepts **PDF**, **DOCX**, and **image-based documents**, extracts textual content, and returns structured AI-powered insights such as:
+It supports **PDF, DOCX, and image files**, extracts text, and returns structured insights:
 
-* concise summaries
-* key entities
-* sentiment classification
+* Concise summaries
+* Key entity extraction
+* Sentiment classification
 
-The system is designed specifically for **robust API evaluation**, making it suitable for automated testing environments like the GUVI hackathon endpoint tester.
+Designed for **robust API evaluation**, making it ideal for automated testing environments.
 
 ---
 
 ## 🎯 Problem Statement
 
-**AI-Powered Document Analysis & Extraction**
+Build an intelligent system that can:
 
-Build an intelligent document processing system that can:
-
-* support multiple document formats
-* extract readable text
-* summarize content
-* identify important entities
-* analyze overall sentiment
+* Support multiple document formats
+* Extract readable text
+* Summarize content
+* Identify important entities
+* Analyze sentiment
 
 ---
 
-## ✨ Key Features
+## 🧠 Solution
 
-### 📄 Multi-Format Document Support
+DocuMind AI transforms **unstructured documents into structured insights** via a single API.
 
-Supports:
+Applicable across:
 
-* **PDF**
-* **DOCX**
-* **Image files (OCR)**
-
----
-
-### 🔍 Intelligent Text Extraction
-
-Automatically extracts text from uploaded documents using format-specific parsing and OCR.
-
-* **PDF text extraction**
-* **Word document parsing**
-* **Image OCR using Tesseract**
+* Business operations
+* Legal workflows
+* Finance
+* HR
+* Education
+* Automation systems
 
 ---
 
-### 🧠 AI-Powered Analysis
+## ✨ Core Features
 
-Each processed document returns:
+### 📄 Multi-Format Support
 
-* **Summary** → concise explanation of document content
-* **Entities** → extraction of:
+* PDF
+* DOCX
+* Images (OCR)
+
+### 🔍 Intelligent Extraction
+
+* PDF → PyMuPDF
+* DOCX → python-docx
+* Images → Tesseract OCR
+
+### 🧠 AI Analysis
+
+* Summary
+* Entity extraction:
 
   * Names
   * Dates
   * Organizations
-  * Monetary Amounts
+  * Amounts
   * Locations
-* **Sentiment** → classification as:
+* Sentiment:
 
-  * Positive
-  * Negative
-  * Neutral
+  * Positive / Negative / Neutral
 
----
+### 🔐 Secure API
 
-### 🔐 Secure API Access
+* `x-api-key` authentication
 
-The API uses **`x-api-key` authentication** to protect access and match the hackathon’s endpoint testing requirements.
+### ⚙️ Robust Validation
 
----
+Handles:
 
-### ⚙️ Robust Validation & Error Handling
-
-The system safely handles:
-
-* invalid API keys
-* unsupported file types
-* malformed base64 input
-* empty payloads
-* processing failures
+* Invalid API keys
+* Unsupported file types
+* Malformed base64
+* Empty payloads
+* Extraction failures
 
 ---
 
 ## 🏗️ System Architecture
 
-The backend is designed with a clean modular architecture:
+### 🔄 Flow
 
-```text
-Client Request
-   ↓
-FastAPI Endpoint
-   ↓
-Authentication + Validation
-   ↓
-Document Extraction Layer
-   ├── PDF Extractor
-   ├── DOCX Extractor
-   └── Image OCR Extractor
-   ↓
-Analysis Layer
-   ├── Summarizer
-   ├── Entity Extractor
-   └── Sentiment Analyzer
-   ↓
-Structured JSON Response
 ```
+Client
+  ↓
+FastAPI Layer
+  ↓
+Auth + Validation
+  ↓
+Document Processing
+  ├── PDF
+  ├── DOCX
+  └── OCR
+  ↓
+AI Analysis
+  ├── Summary
+  ├── Entities
+  └── Sentiment
+  ↓
+JSON Response
+```
+
+---
+
+### 🧩 Internal Structure
+
+```
+app/
+├── api/
+├── models/
+├── services/
+│   ├── extractors
+│   ├── analyzer
+│   ├── summarizer
+│   ├── entity extractor
+│   └── sentiment analyzer
+├── utils/
+├── config.py
+└── main.py
+```
+
+---
+
+## 🔄 Request Flow
+
+### 1. Validation
+
+* Headers
+* API key
+* Schema
+* File type
+* Base64
+
+### 2. Extraction
+
+* PDF → PyMuPDF
+* DOCX → python-docx
+* Image → Tesseract
+
+### 3. Analysis
+
+* Summary
+* Entities
+* Sentiment
+
+### 4. Response
+
+* Structured JSON
 
 ---
 
@@ -124,107 +168,124 @@ Structured JSON Response
 
 ### Backend
 
-* **FastAPI**
-* **Python**
+* FastAPI
+* Python
 
-### Document Processing
+### Processing
 
-* **PyMuPDF** → PDF extraction
-* **python-docx** → DOCX extraction
-* **Pillow** → image handling
-* **Tesseract OCR** → text extraction from images
+* PyMuPDF
+* python-docx
+* Pillow
+* Tesseract OCR
 
-### NLP / AI Processing
+### AI / NLP
 
-* **Regex + heuristics** → structured entity extraction
-* **VADER Sentiment Analysis** → document sentiment classification
-* **Extractive summarization logic** → concise content summary
+* Regex + heuristics
+* VADER sentiment
+* Extractive summarization
 
-### Deployment
+### DevOps
 
-* **Render / Railway compatible**
+* Docker
+* Render
+* GitHub
 
 ---
 
 ## 📂 Project Structure
 
-```text
+```
 documind-ai/
-│
 ├── backend/
-│   ├── app/
-│   │   ├── api/
-│   │   ├── models/
-│   │   ├── services/
-│   │   ├── utils/
-│   │   ├── config.py
-│   │   └── main.py
-│   ├── requirements.txt
-│   ├── .env.example
-│   └── README.md
-│
 ├── test_files/
 ├── test_api.py
-├── .gitignore
+├── render.yaml
 └── README.md
 ```
 
 ---
 
-## 🔌 API Specification
+## 🌐 Deployment
+
+### Base URL
+
+```
+https://documind-ai-2s72.onrender.com
+```
+
+### Docs
+
+```
+/docs
+```
+
+### Health
+
+```
+/health
+```
 
 ### Endpoint
 
-```http
+```
 POST /api/document-analyze
 ```
 
 ---
 
-### Required Headers
+## 🔌 API Spec
 
-```http
-x-api-key: YOUR_API_KEY
+### Headers
+
+```
+x-api-key: documind123
 Content-Type: application/json
 ```
 
----
-
-### Request Body
+### Request
 
 ```json
 {
   "fileName": "sample.pdf",
   "fileType": "pdf",
-  "fileBase64": "BASE64_ENCODED_FILE"
+  "fileBase64": "BASE64_STRING"
 }
+```
+
+### File Types
+
+| Type  | Value |
+| ----- | ----- |
+| PDF   | pdf   |
+| DOCX  | docx  |
+| Image | image |
+
+---
+
+## 📥 Example Request
+
+```bash
+curl -X POST ".../api/document-analyze" \
+-H "x-api-key: documind123" \
+-H "Content-Type: application/json" \
+-d '{ ... }'
 ```
 
 ---
 
-### Supported File Types
-
-| File Type | Value   |
-| --------- | ------- |
-| PDF       | `pdf`   |
-| DOCX      | `docx`  |
-| Image     | `image` |
-
----
-
-## 📤 Example Success Response
+## 📤 Success Response
 
 ```json
 {
   "status": "success",
-  "fileName": "sample.pdf",
-  "summary": "This document discusses recent developments in artificial intelligence and its impact on industry growth.",
+  "fileName": "invoice.pdf",
+  "summary": "...",
   "entities": {
-    "names": ["Nina Lane"],
-    "dates": ["June 2020"],
-    "organizations": ["Acme Corporation"],
-    "amounts": ["$2,500.00"],
-    "locations": ["New York, NY"]
+    "names": [],
+    "dates": [],
+    "organizations": [],
+    "amounts": [],
+    "locations": []
   },
   "sentiment": "Positive"
 }
@@ -232,7 +293,7 @@ Content-Type: application/json
 
 ---
 
-## ❌ Example Error Response
+## ❌ Error Response
 
 ```json
 {
@@ -246,185 +307,107 @@ Content-Type: application/json
 
 ---
 
-## 🧪 Local Development Setup
+## 🧪 Testing
 
-### 1) Clone the repository
+### Manual
 
-```bash
-git clone https://github.com/YOUR_USERNAME/documind-ai.git
-cd documind-ai
+* Swagger
+* Postman
+* cURL
+
+### Automated
+
 ```
+python test_api.py
+```
+
+Covers:
+
+* All formats
+* Errors
+* Validation
 
 ---
 
-### 2) Create virtual environment
+## 💻 Local Setup
+
+### 1. Clone
 
 ```bash
-cd backend
+git clone <repo>
+cd documind-ai/backend
+```
+
+### 2. Env
+
+```bash
 python -m venv venv
 ```
 
-#### Windows
-
-```bash
-venv\Scripts\activate
-```
-
-#### macOS / Linux
-
-```bash
-source venv/bin/activate
-```
-
----
-
-### 3) Install dependencies
+### 3. Install
 
 ```bash
 pip install -r requirements.txt
 ```
 
----
+### 4. Config
 
-### 4) Configure environment variables
-
-Create a `.env` file inside `backend/`:
-
-```env
+```
 API_KEY=documind123
 ```
 
-You can also use the provided:
-
-```text
-.env.example
-```
-
----
-
-### 5) Run the backend server
+### 5. Run
 
 ```bash
 uvicorn app.main:app --reload
 ```
 
-Then open:
+---
 
-```text
-http://127.0.0.1:8000/docs
-```
+## 🔑 Evaluation
 
-This opens the interactive **Swagger UI** for testing the API.
+* Header: `x-api-key: documind123`
+* Endpoint: `/api/document-analyze`
 
 ---
 
-## 🧪 Automated Testing
+## 🏆 Highlights
 
-A simple automated API test script is included:
-
-```bash
-python test_api.py
-```
-
-This verifies:
-
-* PDF analysis
-* DOCX analysis
-* image OCR analysis
-* invalid API key handling
-* unsupported file type validation
-* empty file validation
-* malformed base64 validation
+* Clean modular architecture
+* Multi-format + OCR support
+* Structured AI pipeline
+* Strong validation
+* Deployment-ready
+* Hackathon-optimized
 
 ---
 
-## 🔑 API Key for Evaluation
+## ⚠️ Limitations
 
-For hackathon evaluation, use:
-
-```text
-x-api-key: documind123
-```
-
-> This key is provided for testing/demo purposes only.
-
----
-
-## 🎥 Demo Video
-
-**Demo Video Link:**
-*Add your YouTube or Google Drive demo link here*
-
----
-
-## 🌐 Live Deployment
-
-**Live API URL:**
-*Add your deployed backend URL here*
-
-**Swagger Docs:**
-*Add your `/docs` link here*
-
-Example:
-
-```text
-https://your-app.onrender.com/docs
-```
-
----
-
-## 🤖 AI Tools Used
-
-As required by the hackathon rules, the following AI tools were used during development:
-
-* **ChatGPT** → project planning, debugging, architecture guidance
-* **Claude** → implementation support and refinement
-* **GitHub Copilot** → code completion and development assistance
-
----
-
-## ⚠️ Known Limitations
-
-* OCR accuracy depends on image quality and text clarity
-* Entity extraction is heuristic-based and may include occasional noisy outputs
-* Complex document layouts may reduce extraction accuracy
-* This project is optimized for hackathon evaluation and production-style robustness within limited build time
+* OCR depends on image quality
+* Heuristic entity extraction
+* Complex layouts may affect accuracy
 
 ---
 
 ## 🚀 Future Improvements
 
-Potential enhancements include:
-
-* better layout-aware OCR
-* stronger named entity recognition models
-* confidence scores for extracted entities
-* batch document processing
-* frontend upload dashboard
-* async background task processing
-
----
-
-## 🏆 Hackathon Submission Focus
-
-This project was designed to maximize performance for the **GUVI Hackathon 2026 API Endpoint Tester** by prioritizing:
-
-* API stability
-* clean request/response handling
-* multi-format support
-* modular backend design
-* automated validation readiness
+* Advanced OCR
+* Better NER models
+* Confidence scores
+* Batch processing
+* Async jobs
+* Dashboard UI
 
 ---
 
 ## 👨‍💻 Author
 
 **Atharv Navatre**
-
-Built as part of **GUVI Hackathon 2026 – Intern Hiring Challenge**
+GUVI Hackathon 2026
 
 ---
 
 ## 📜 License
 
-This project is developed for educational and hackathon submission purposes.
+Educational / portfolio use
