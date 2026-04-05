@@ -251,7 +251,7 @@ Content-Type: application/json
 ### 1) Clone the repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/documind-ai.git
+git clone https://github.com/Atharv-navatre/documind-ai.git
 cd documind-ai
 ```
 
